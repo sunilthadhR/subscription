@@ -50,3 +50,32 @@ def subscription(request):
 
 
 
+@csrf_exempt
+def token(request):
+    if request.method=='POST':
+        r=redis.Redis(host='localhost', port=6379, db=0)
+        data = json.loads(request.body.decode('utf-8'))
+        token =data.get('token')
+        if token:
+            r.set(token, token, ex=60)
+            return JsonResponse({"message": "Token generated"})
+        return JsonResponse({"error": "No token provided"}, status=400)
+
+
+@csrf_exempt
+def user(request):
+    data = json.loads(request.body.decode('utf-8'))
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    value = data.get('token')
+    mobile = data.get('mobile')
+    user=User.objects.filter(mobile=mobile).last()
+    token = r.get(value)
+    if token:
+        if user:
+            return JsonResponse({"message": "logined user"})
+        return JsonResponse({"message": "Non_logined user"})
+    return JsonResponse({"message": 'token expired,kindly Generate new Token'})
+
+
+
+
